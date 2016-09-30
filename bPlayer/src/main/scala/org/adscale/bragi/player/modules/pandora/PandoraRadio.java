@@ -1,0 +1,23 @@
+package org.adscale.bragi.player.modules.pandora;
+
+import java.util.List;
+
+public interface PandoraRadio {
+    void connect(String user, String password) throws Exception;
+
+    void sync();
+
+    void disconnect();
+
+    List<Station> getStations();
+
+    Station getStationById(long sid);
+
+    void rate(Song song, boolean rating);
+
+    boolean isAlive();
+
+    Song[] getPlaylist(Station station, String format);
+
+    void tired(Song song);
+}

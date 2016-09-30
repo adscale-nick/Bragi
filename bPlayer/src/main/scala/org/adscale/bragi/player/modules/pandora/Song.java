@@ -1,0 +1,223 @@
+package org.adscale.bragi.player.modules.pandora;
+
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Song {
+
+    private static final Logger logger = Logger.getLogger(Song.class.getName());
+
+    private String album;
+
+    private String artist;
+
+    private String artistMusicId;
+
+    private String audioUrl;
+
+    private String fileGain;
+
+    private String identity;
+
+    private Integer rating;
+
+    private String stationId;
+
+    private String title;
+
+    private String songDetailURL;
+
+    private String albumDetailURL;
+
+    private String artRadio;
+
+    private String trackToken;
+
+    private boolean tired;
+
+    private String message;
+
+    private Object startTime;
+
+    private boolean finished;
+
+    private long playlistTime;
+
+
+    public Song(Map<String, Object> data, XmlRpcPandoraRadio pandoraRadio) {
+        try {
+            album = (String) data.get("albumTitle");
+            artist = (String) data.get("artistSummary");
+            artistMusicId = (String) data.get("artistMusicId");
+            audioUrl = (String) data.get("audioURL"); // needs to be hacked, see below
+            fileGain = (String) data.get("fileGain");
+            identity = (String) data.get("identity");
+            rating = (Integer) data.get("rating");
+            stationId = (String) data.get("stationId");
+            title = (String) data.get("songTitle");
+            songDetailURL = (String) data.get("songDetailURL");
+            albumDetailURL = (String) data.get("albumDetailURL");
+            artRadio = (String) data.get("artRadio");
+            trackToken = (String) data.get("trackToken");
+
+            int aul = audioUrl.length();
+            audioUrl = audioUrl.substring(0, aul - 48) + pandoraRadio.pandoraDecrypt(audioUrl.substring(aul - 48));
+
+            tired = false;
+            message = "";
+            startTime = null;
+            finished = false;
+            playlistTime = System.currentTimeMillis() / 1000L;
+        }
+        catch (RuntimeException ex) {
+            logger.log(Level.WARNING, "Exception caught:", ex);
+        }
+    }
+
+
+    public Song(Song copy, Integer newRating) {
+        album = copy.album;
+        artist = copy.artist;
+        artistMusicId = copy.artistMusicId;
+        audioUrl = copy.audioUrl;
+        fileGain = copy.fileGain;
+        identity = copy.identity;
+        rating = newRating;
+        stationId = copy.stationId;
+        title = copy.title;
+        songDetailURL = copy.songDetailURL;
+        albumDetailURL = copy.albumDetailURL;
+        artRadio = copy.artRadio;
+        trackToken = copy.trackToken;
+        audioUrl = copy.audioUrl;
+        tired = copy.tired;
+        message = copy.message;
+        startTime = copy.startTime;
+        finished = copy.finished;
+        playlistTime = copy.playlistTime;
+    }
+
+
+    public Song(String album,
+                String artist,
+                String audioUrl,
+                String stationId,
+                String title,
+                String albumDetailURL,
+                String artRadio,
+                String trackToken,
+                Integer rating) {
+        this.album = album;
+        this.artist = artist;
+        this.audioUrl = audioUrl;
+        this.stationId = stationId;
+        this.title = title;
+        this.albumDetailURL = albumDetailURL;
+        this.artRadio = artRadio;
+        this.trackToken = trackToken;
+        playlistTime = System.currentTimeMillis() / 1000L;
+        this.rating = rating;
+    }
+
+
+    public boolean isStillValid() {
+        return ((System.currentTimeMillis() / 1000L) - playlistTime) < XmlRpcPandoraRadio.PLAYLIST_VALIDITY_TIME;
+    }
+
+
+    public String getTrackToken() {
+        return trackToken;
+    }
+
+
+    public String getAudioUrl() {
+        return audioUrl;
+    }
+
+
+    public String getAlbumCoverUrl() {
+        return artRadio;
+    }
+
+
+    public String getTitle() {
+        return title;
+    }
+
+
+    public String getArtist() {
+        return artist;
+    }
+
+
+    public String getAlbum() {
+        return album;
+    }
+
+
+    public Integer getRating() {
+        return rating;
+    }
+
+
+    public String getArtistMusicId() {
+        return artistMusicId;
+    }
+
+
+    public String getFileGain() {
+        return fileGain;
+    }
+
+
+    public String getIdentity() {
+        return identity;
+    }
+
+
+    public String getStationId() {
+        return stationId;
+    }
+
+
+    public String getSongDetailURL() {
+        return songDetailURL;
+    }
+
+
+    public String getAlbumDetailURL() {
+        return albumDetailURL;
+    }
+
+
+    public boolean isTired() {
+        return tired;
+    }
+
+
+    public String getMessage() {
+        return message;
+    }
+
+
+    public Object getStartTime() {
+        return startTime;
+    }
+
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+
+    public boolean isLoved() {
+        return rating != null && rating > 0;
+    }
+
+
+    @Override
+    public String toString() {
+        return title;
+    }
+}
