@@ -1,17 +1,22 @@
 package org.adscale.bragi.player.modules.pandora
 
-import java.io.{File, FileOutputStream}
+import java.io.{IOException, File, FileOutputStream}
 import java.net.URL
 import java.nio.channels.{Channels, ReadableByteChannel}
 import java.util.{List => JList}
 import javax.sound.sampled.AudioInputStream
 
 import be.tarsos.transcoder.{Attributes, DefaultAttributes, Streamer}
+import com.google.common.base.Joiner
 import org.adscale.bragi.player.AudioService
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import scala.collection.JavaConversions._
 
 class PandoraPlayer extends AudioService {
+
+    val log: Logger = LoggerFactory.getLogger(classOf[PandoraPlayer])
 
     var currentStation: Station = null
 
@@ -19,25 +24,28 @@ class PandoraPlayer extends AudioService {
 
     var playlist: Array[Song] = null
 
-    var radio: JsonPandoraRadio = new JsonPandoraRadio()
-
-
     val pandoraStorage: String = "/home/nicks/pandora/"
 
     val attributes: Attributes = DefaultAttributes.WAV_PCM_S16LE_MONO_44KHZ.getAttributes
     attributes.setSamplingRate(32000)
 
+    var radio: JsonPandoraRadio = new JsonPandoraRadio()
 
+    radio.connect("nic4eva@gmail.com", "gundam1")
     val radioStations: JList[Station] = radio.getStations
+    log.debug("Available stations: \n\t => {}", Joiner.on("\n\t => ").join(radioStations))
 
     def loadStation(stationString: String): Boolean = {
         for (station: Station <- radioStations) {
-            if (station.getName.toLowerCase.contains(stationString)) {
+            if (station.getName.toLowerCase.contains(stationString.toLowerCase)) {
+                log.info("Loading station: {}", station.getName)
                 currentStation = station
                 val stationDir: File = new File(pandoraStorage + currentStation.getName)
-                if(!stationDir.exists()){
+                if (!stationDir.exists()) {
+                    log.info("Made new directory for station: {}", station.getName)
                     stationDir.mkdirs()
                 }
+                log.info("Station loaded successfully.")
                 return true
             }
         }
@@ -49,7 +57,13 @@ class PandoraPlayer extends AudioService {
         playlist(currentSongIndex).getArtist + " - " + playlist(currentSongIndex).getTitle
     }
 
-    override def queue(): Array[String] = ???
+    override def queue(): String = {
+        var queueString: String = ""
+        for (song <- playlist) {
+            queueString = queueString + song.getArtist + " - " + song.getTitle + "\n"
+        }
+        queueString
+    }
 
     override def next(): AudioInputStream = {
         currentSongIndex = currentSongIndex + 1
@@ -59,11 +73,19 @@ class PandoraPlayer extends AudioService {
         }
         val song: Song = playlist(currentSongIndex)
         val songPath: String = pandoraStorage + currentStation.getName + "/" + song.getArtist + " - " + song.getTitle + ".mp3"
-        if (!new File(songPath).exists()) {
-            val rbc: ReadableByteChannel = Channels.newChannel(new URL(song.getAudioUrl).openStream())
-            val fos: FileOutputStream = new FileOutputStream(songPath)
-            fos.getChannel.transferFrom(rbc, 0, Long.MaxValue)
+        try {
+            if (!new File(songPath).exists()) {
+                val rbc: ReadableByteChannel = Channels.newChannel(new URL(song.getAudioUrl).openStream())
+                val fos: FileOutputStream = new FileOutputStream(songPath)
+                fos.getChannel.transferFrom(rbc, 0, Long.MaxValue)
+            }
+            Streamer.stream(songPath, attributes)
         }
-        Streamer.stream(songPath, attributes)
+        catch {
+            case e: IOException =>
+                log.error("Problem saving file: {}", songPath)
+
+            next()
+        }
     }
 }

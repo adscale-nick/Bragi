@@ -4,6 +4,6 @@ import javax.sound.sampled.AudioInputStream
 
 trait AudioService {
     def song(): String
-    def queue(): Array[String]
+    def queue(): String
     def next(): AudioInputStream
 }
