@@ -5,6 +5,7 @@ import javax.sound.sampled.{AudioInputStream, AudioSystem, Clip}
 import org.adscale.bragi.player.modules.pandora.PandoraPlayer
 import org.slf4j.{LoggerFactory, Logger}
 
+
 object Player extends App {
     var clip: Clip = null
 
@@ -18,7 +19,7 @@ object Player extends App {
 
 
     override def main(args: Array[String]) {
-        log = LoggerFactory.getLogger("Player")
+        log = LoggerFactory.getLogger("org.adscale.bragi.player.Player")
         clip = AudioSystem.getClip
         player = new PandoraPlayer()
         val stationName: String = "Eric Clapton"
@@ -37,11 +38,18 @@ object Player extends App {
             log.error("Could not load given station \'{}\'", stationName)
         }
     }
+
     def play(audioIn: AudioInputStream): Unit = {
-        currentlyPlaying = true
-        clip.open(audioIn)
-        log.info(player.song())
+        if(!currentlyPlaying) {
+            currentlyPlaying = true
+            clip.open(audioIn)
+            log.info(player.song())
+        }
         clip.start()
+    }
+
+    def pause(): Unit ={
+        clip.stop()
     }
 
     def songEnded: Boolean = {

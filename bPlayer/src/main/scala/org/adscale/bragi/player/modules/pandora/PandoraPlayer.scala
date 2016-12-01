@@ -45,6 +45,7 @@ class PandoraPlayer extends AudioService {
                     log.info("Made new directory for station: {}", station.getName)
                     stationDir.mkdirs()
                 }
+                playlist = radio.getPlaylist(currentStation, "JSON")
                 log.info("Station loaded successfully.")
                 return true
             }
@@ -54,12 +55,14 @@ class PandoraPlayer extends AudioService {
 
 
     override def song(): String = {
-        playlist(currentSongIndex).getArtist + " - " + playlist(currentSongIndex).getTitle
+        val artist = playlist(currentSongIndex).getArtist
+        val title: String = playlist(currentSongIndex).getTitle
+        s"[$currentStation] $artist - $title"
     }
 
     override def queue(): String = {
         var queueString: String = ""
-        for (song <- playlist) {
+        for (song <- playlist.slice(currentSongIndex+1, playlist.length)) {
             queueString = queueString + song.getArtist + " - " + song.getTitle + "\n"
         }
         queueString
