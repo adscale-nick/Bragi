@@ -69,6 +69,7 @@ class PandoraPlayer extends AudioService {
     }
 
     override def next(): AudioInputStream = {
+        log.info("Next Song Called")
         currentSongIndex = currentSongIndex + 1
         if (playlist == null || (currentSongIndex == playlist.length)) {
             playlist = radio.getPlaylist(currentStation, "JSON")
@@ -76,12 +77,16 @@ class PandoraPlayer extends AudioService {
         }
         val song: Song = playlist(currentSongIndex)
         val songPath: String = pandoraStorage + currentStation.getName + "/" + song.getArtist + " - " + song.getTitle + ".mp3"
+        log.info("Next song: {}", songPath)
         try {
             if (!new File(songPath).exists()) {
+                log.info("Downloading file")
                 val rbc: ReadableByteChannel = Channels.newChannel(new URL(song.getAudioUrl).openStream())
                 val fos: FileOutputStream = new FileOutputStream(songPath)
                 fos.getChannel.transferFrom(rbc, 0, Long.MaxValue)
+                log.info("File downloaded, opening...")
             }
+            log.info("Starting song")
             Streamer.stream(songPath, attributes)
         }
         catch {

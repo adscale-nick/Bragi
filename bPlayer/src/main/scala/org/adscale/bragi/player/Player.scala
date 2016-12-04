@@ -15,9 +15,6 @@ object Player extends App {
 
     var log: Logger = null
 
-
-
-
     override def main(args: Array[String]) {
         log = LoggerFactory.getLogger("org.adscale.bragi.player.Player")
         clip = AudioSystem.getClip
