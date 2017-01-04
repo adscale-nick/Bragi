@@ -1,6 +1,6 @@
 package org.adscale.bragi.player.modules.pandora
 
-import java.io.{IOException, File, FileOutputStream}
+import java.io.{File, FileOutputStream, IOException}
 import java.net.URL
 import java.nio.channels.{Channels, ReadableByteChannel}
 import java.util.{List => JList}
@@ -8,6 +8,7 @@ import javax.sound.sampled.AudioInputStream
 
 import be.tarsos.transcoder.{Attributes, DefaultAttributes, Streamer}
 import com.google.common.base.Joiner
+import com.typesafe.config.{Config, ConfigFactory}
 import org.adscale.bragi.player.AudioService
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
@@ -24,7 +25,9 @@ class PandoraPlayer extends AudioService {
 
     var playlist: Array[Song] = null
 
-    val pandoraStorage: String = "/home/nicks/pandora/"
+    val config: Config = ConfigFactory.load()
+
+    val pandoraStorage: String = config.getString("local.pandoraStorage")
 
     val attributes: Attributes = DefaultAttributes.WAV_PCM_S16LE_MONO_44KHZ.getAttributes
     attributes.setSamplingRate(32000)
