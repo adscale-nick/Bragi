@@ -8,7 +8,7 @@ import spray.can.Http
 
 import scala.concurrent.duration._
 
-object Boot extends App {
+object BragiServiceApp extends App {
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("bragi-web-app")

@@ -4,8 +4,8 @@ import spray.httpx._
 import spray.json._
 
 
-case class Filter(platform: String, term: String)
+case class Filter(action: String, platform: String, term: String)
 
 object FilterProtocol extends  DefaultJsonProtocol with SprayJsonSupport{
-    implicit val filter = jsonFormat2(Filter)
+    implicit val filter = jsonFormat3(Filter)
 }

@@ -2,7 +2,9 @@ package bragi
 
 import java.nio.file.{Files, Paths, StandardOpenOption}
 
-import bragi.model.Instruction
+import bragi.model.Command
+import com.google.gson.Gson
+import com.typesafe.scalalogging.LazyLogging
 import com.ullink.slack.simpleslackapi.SlackSession
 import com.ullink.slack.simpleslackapi.events.SlackMessagePosted
 import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory
@@ -10,7 +12,9 @@ import com.ullink.slack.simpleslackapi.listeners.SlackMessagePostedListener
 
 import scalaj.http.{Http, HttpOptions}
 
-object BotRunner {
+object BragiBotRunner extends LazyLogging{
+
+    val bragiServiceUrl: String = "http://localhost:9090/bragi"
 
     def main(args: Array[String]) {
         println("What's the Slack API token?")
@@ -23,10 +27,6 @@ object BotRunner {
         val listener = new SlackMessagePostedListener {
             override def onEvent(msg: SlackMessagePosted, slackSession: SlackSession): Unit = {
                 try {
-                    var message = "\n==============================\n"
-                    message += generateJson(msg)
-                    message += "\n==============================\n"
-                    Files.write(Paths.get("/tmp/bragi.txt"), message.getBytes, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
                     postToServer(generateJson(msg))
                 } catch {
                     case e: Exception => println("Caught exception")
@@ -39,28 +39,36 @@ object BotRunner {
         println("Slackbot started!")
     }
 
-
     def generateJson(msg: SlackMessagePosted): String = {
 
-        val commands: Array[String] = msg.getMessageContent.split(":")
+        val args: Array[String] = msg.getMessageContent.split(" ")
 
-        var json = ""
+        val command = new Command()
+        command.action = args(0)
+        command.platform = getOption(args, "-p")
+        command.term = getOption(args, "-t")
 
-        if(commands.length == 2) {
-            json = "{\"platform\": \"" + commands(0) + "\", \"term\": \"" + commands(1) + "\"}"
-        }
-        else {
-            println("invalid command")
-        }
+        val gson = new Gson
 
+        val json: String = gson.toJson(command)
         json
     }
 
+    def getOption(args: Array[String], option: String): String = {
+        val opt: Int = args.indexOf(option)
+        if(opt > 0) {
+            return args(opt + 1)
+        }
+
+        ""
+    }
     def postToServer(json: String) = {
-        val result = Http("http://localhost:9090/search").postData(json)
+        logger.info("sending post request to {} with json body {}", bragiServiceUrl, json)
+        val result = Http(bragiServiceUrl).postData(json)
                 .header("Content-Type", "application/json")
                 .header("Charset", "UTF-8")
                 .option(HttpOptions.readTimeout(10000)).asString
+        logger.info("response from bragi service {}", result)
         result
     }
 
